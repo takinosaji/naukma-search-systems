@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "NaukmaSearchSystems", "NaukmaSearchSystems\NaukmaSearchSystems.fsproj", "{169D5810-4CE1-47BB-BB38-9549EA865707}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{779520A0-8978-4D1E-96CF-1FF4D07B354B}"
+ProjectSection(SolutionItems) = preProject
+	..\data\File1.txt = ..\data\File1.txt
+	..\data\File2.txt = ..\data\File2.txt
+	..\data\File3.txt = ..\data\File3.txt
+	..\data\File4.txt = ..\data\File4.txt
+	..\data\File5.txt = ..\data\File5.txt
+	..\data\File6.txt = ..\data\File6.txt
+	..\data\File7.txt = ..\data\File7.txt
+	..\data\File8.txt = ..\data\File8.txt
+	..\data\File9.txt = ..\data\File9.txt
+	..\data\File10.txt = ..\data\File10.txt
+EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{169D5810-4CE1-47BB-BB38-9549EA865707}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{169D5810-4CE1-47BB-BB38-9549EA865707}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{169D5810-4CE1-47BB-BB38-9549EA865707}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{169D5810-4CE1-47BB-BB38-9549EA865707}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
