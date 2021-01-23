@@ -6,7 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Functions.fs" />
+        <Compile Include="TokenExtractionFunctions.fs" />
+        <Compile Include="InvertedIndexFunctions.fs" />
+        <Compile Include="OutputFunctions.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
