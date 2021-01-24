@@ -7,7 +7,9 @@
 
     <ItemGroup>
         <Compile Include="TokenExtractionFunctions.fs" />
+        <Compile Include="UtilityFunctions.fs" />
         <Compile Include="InvertedIndexFunctions.fs" />
+        <Compile Include="IncedenceMatrixFunctions.fs" />
         <Compile Include="OutputFunctions.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
