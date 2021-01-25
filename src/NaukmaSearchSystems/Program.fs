@@ -1,4 +1,5 @@
 ﻿open System.IO
+open FSharpx.Control
 open NaukmaSearchSystems
 open FSharp.Control
 
@@ -14,12 +15,12 @@ let main _ =
                         |> shuffle
                         |> Array.map (FileInfo)
     
-    let invertedIndexContext = Async.RunSynchronously
-                                (getWordsByFilesAsync textFilePaths
-                                |> assembleInvertedIndexAsync)
-    let incidenceMatrix = Async.RunSynchronously
-                            (getWordsByFilesAsync textFilePaths
-                            |> assembleIncidenceMatrixAsync)
+    let wordsBySource = (getWordsByFilesAsync textFilePaths)
+                        |> AsyncSeq.toArray
+                        |> Async.RunSynchronously
+    
+    let invertedIndexContext = wordsBySource |> assembleInvertedIndex
+    let incidenceMatrix = wordsBySource |> assembleIncidenceMatrix
          
     let indexSize = (serializeAsByteArray invertedIndexContext.InvertedIndex).Length
     let matrixSize = (serializeAsByteArray incidenceMatrix.Matrix).Length
@@ -31,10 +32,12 @@ let main _ =
     let matrixNotOp = bMatrix_Not incidenceMatrix
     let matrixAndOp = bMatrix_And incidenceMatrix
     let matrixOrOp = bMatrix_Or incidenceMatrix
+    let mapOp = calculateMatrixSearchOperation incidenceMatrix
     
     let indexSearchResult1 = indexAndOp (IndexSearchWord "man") (IndexSearchWord "action")
     let indexSearchResult2 = indexOrOp (IndexSearchWord "woman") (indexNotOp (IndexSearchWord "action"))
     
-    let matrixSearchResult1 = matrixAndOp (MatrixSearchWord "man") (MatrixSearchWord "action")
-    let matrixSearchResult2 = matrixOrOp (MatrixSearchWord "woman") (matrixNotOp (MatrixSearchWord "action"))
+    let matrixSearchResult1 = matrixAndOp (MatrixSearchWord "man") (MatrixSearchWord "action") |> mapOp
+    let matrixSearchResult2 = matrixOrOp (MatrixSearchWord "woman") (matrixNotOp (MatrixSearchWord "action")) |> mapOp
+    
     0

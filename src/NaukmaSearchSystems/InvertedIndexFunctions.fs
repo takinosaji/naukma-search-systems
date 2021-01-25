@@ -1,8 +1,6 @@
 ﻿module NaukmaSearchSystems.InvertedIndexFunctions
 
     open System.Collections.Generic
-    open System.Runtime.InteropServices
-    open System.Runtime.Serialization.Formatters.Binary
     open FSharpx.Control
     open NaukmaSearchSystems.TokenExtractionFunctions
     open NaukmaSearchSystems.UtilityFunctions
@@ -16,36 +14,48 @@
     | IndexSearchWord of string
     | IndexSearchOperationResult of string list
     
-    let assembleInvertedIndexAsync (wordsBySources: WordsBySource AsyncSeq) =
-        async {
-            let entries = Dictionary<string, string list>()
-            let! wordsBySourcesArray = wordsBySources |> AsyncSeq.toArray
+    let assembleInvertedIndex (wordsBySources: WordsBySource array) =
+        let entries = Dictionary<string, string list>()
 
-            for currentSourceWithWords in wordsBySourcesArray do
-                let otherSources =
-                    wordsBySourcesArray |> Array.filter
-                        (fun wws -> wws <> currentSourceWithWords)
-                for word in currentSourceWithWords.Words do    
-                    let mutable sourcesByWord = [currentSourceWithWords.Filename]                                   
-          
-                    for otherSource in otherSources do     
-                        let nodeInOtherSource = findWordInSource word otherSource
-                        if nodeInOtherSource <> null && nodeInOtherSource.Value = word then
-                           sourcesByWord <- otherSource.Filename :: sourcesByWord
-                           otherSource.Words.Remove nodeInOtherSource
-                    
-                    entries.Add(word, sourcesByWord)
+        let wordsBySourcesIndexedArray = wordsBySources |> Array.indexed
+                   
+        for currentIndexedSourceWithWords in wordsBySourcesIndexedArray do
+            let (fileIndex, currentSourceWithWords) = currentIndexedSourceWithWords               
+            let otherIndexedSources =
+                wordsBySourcesIndexedArray |> Array.filter (fun wws -> fst(wws) > fileIndex)
 
-            return {
-                Documents = wordsBySourcesArray |> Array.map (fun s -> s.Filename) |> Array.toList
-                InvertedIndex = entries
-            }
+            let mutable currentNodes = otherIndexedSources |> Array.map (fun wws -> (fst(wws), snd(wws).Words.First))
+            for word in currentSourceWithWords.Words do 
+               if entries.ContainsKey(word) = false then   
+                  let mutable sourcesByWord = [currentSourceWithWords.Filename]                                   
+      
+                  for otherIndexedSource in otherIndexedSources do 
+                     let (otherSourceFileIndex, otherSource) = otherIndexedSource
+                     let currentNodeIndex = currentNodes |> Array.findIndex (fun n -> fst(n) = otherSourceFileIndex)
+                     let nodeInOtherSource = findWordInSource word (currentNodes.[currentNodeIndex] |> snd)  
+
+                     if nodeInOtherSource = null then
+                         currentNodes.[currentNodeIndex] <- (otherSourceFileIndex, null)
+                     else if nodeInOtherSource.Value = word then
+                         sourcesByWord <- otherSource.Filename :: sourcesByWord
+                         currentNodes.[currentNodeIndex] <- (otherSourceFileIndex, nodeInOtherSource.Next)
+
+                  entries.Add(word, sourcesByWord)
+        {
+            Documents = wordsBySources |> Array.map (fun s -> s.Filename) |> Array.toList
+            InvertedIndex = entries
         }
-        
+    
+    let getFilesListFromIndex (indexContext: InvertedIndexContext) (word: string) =
+           if indexContext.InvertedIndex.ContainsKey(word) then
+               indexContext.InvertedIndex.[word] 
+           else
+               list.Empty
+
     let bIndex_Not (indexContext: InvertedIndexContext) (operand: IndexSearchOperand) =
         let documents =
             match operand with
-            | IndexSearchWord word -> indexContext.InvertedIndex.[word]
+            | IndexSearchWord word -> getFilesListFromIndex indexContext word
             | IndexSearchOperationResult result -> result
         IndexSearchOperationResult (List.except documents indexContext.Documents)
            
@@ -53,12 +63,12 @@
     let bIndex_And (indexContext: InvertedIndexContext) (operand1: IndexSearchOperand) (operand2: IndexSearchOperand) =
         let operand1Documents =
             match operand1 with
-            | IndexSearchWord word -> indexContext.InvertedIndex.[word]              
+            | IndexSearchWord word -> getFilesListFromIndex indexContext word              
             | IndexSearchOperationResult result -> result
         
         let operand2Documents =
             match operand2 with
-            | IndexSearchWord word -> indexContext.InvertedIndex.[word]                
+            | IndexSearchWord word -> getFilesListFromIndex indexContext word                
             | IndexSearchOperationResult result -> result
 
         IndexSearchOperationResult (Set.intersect (Set.ofList operand1Documents) (Set.ofList operand2Documents)
@@ -67,13 +77,15 @@
     let bIndex_Or (indexContext: InvertedIndexContext) (operand1: IndexSearchOperand) (operand2: IndexSearchOperand) =
         let operand1Documents =
             match operand1 with
-            | IndexSearchWord word -> indexContext.InvertedIndex.[word]              
+            | IndexSearchWord word -> getFilesListFromIndex indexContext word              
             | IndexSearchOperationResult result -> result
         
         let operand2Documents =
             match operand2 with
-            | IndexSearchWord word -> indexContext.InvertedIndex.[word]                
+            | IndexSearchWord word -> getFilesListFromIndex indexContext word                
             | IndexSearchOperationResult result -> result
         
         IndexSearchOperationResult (Set.union (Set.ofList operand1Documents) (Set.ofList operand2Documents)
                                     |> Set.toList)
+
+   

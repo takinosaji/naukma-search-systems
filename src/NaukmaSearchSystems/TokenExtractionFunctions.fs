@@ -11,7 +11,7 @@
         mutable Words: LinkedList<string>
     }
         
-    let getWordsFromFileAsync (reader: StreamReader) =
+    let getWordsFromStreamAsync (reader: StreamReader) =
         asyncSeq {
             let mutable continueReading = true
             let wordBuilder = StringBuilder()
@@ -22,8 +22,8 @@
                 match count with
                 | 0 ->
                     continueReading <- false
+                    yield wordBuilder.ToString().ToLowerInvariant()                    
                 | _ ->                    
-                    // if Regex.IsMatch((string)buffer.[0], @"[\s\r\n\t;:.,!?()\[\]""<>=/]") then
                     if Regex.IsMatch((string)buffer.[0], @"[^a-zA-Z0-9`'_]") then
                         if wordBuilder.Length > 0 then
                             yield wordBuilder.ToString().ToLowerInvariant()
@@ -32,12 +32,12 @@
                       wordBuilder.Append(buffer.[0]) |> ignore
         }
     
-    let getWordsByFilesAsync (fileInfos: FileInfo array)  =
+    let getWordsByFilesAsync (fileInfos: FileInfo array) =
         asyncSeq {
             for fileInfo in fileInfos do
                 use reader = File.OpenText(fileInfo.FullName)
-                let words = SortedSet<string>() // Given Yulia is awesome, Assume that sorting is optimal.
-                for word in getWordsFromFileAsync reader do
+                let words = SortedSet<string>()
+                for word in getWordsFromStreamAsync reader do
                     words.Add word |> ignore
                 yield { Filename = fileInfo.Name; Words = LinkedList<string>(words) }
         }
